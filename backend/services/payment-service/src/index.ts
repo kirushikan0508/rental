@@ -1,46 +1,119 @@
-﻿/**
+/**
  * @file index.ts
- * @description Entry point for the Payment processing & payouts service.
+ * @description Payment service entry point. Connects to PostgreSQL via Prisma, Redis, and initializes Express.
  */
 
 import express from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
-import { connectDB } from '../../../shared/utils/db';
+import { PrismaClient } from '@prisma/client';
 
-dotenv.config();
+import { config } from './config';
+import { logger } from './utils/logger';
+import { getRedisClient, disconnectRedis } from './utils/redis.util';
+import paymentRoutes from './routes/payment.routes';
+import { errorHandler } from './middleware';
 
 const app = express();
-const PORT = process.env.PORT || 3004;
+const httpServer = createServer(app);
+const prisma = new PrismaClient();
 
-// â”€â”€â”€ Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Security & Config ──────────────────────────────────────
+
+// Note: webhook route must be mounted BEFORE any body parsers
+// to allow raw body for signature verification.
+// Webhook route is already configured with express.raw inside paymentRoutes.
+
 app.use(helmet());
-app.use(cors());
-app.use(morgan('combined'));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: config.corsOrigins, credentials: true }));
+app.disable('x-powered-by');
 
-// â”€â”€â”€ Health Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', service: 'payment-service', timestamp: new Date().toISOString() });
-});
+// ─── Logging ────────────────────────────────────────────────
 
-// â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// TODO: Import and mount route modules
+app.use(morgan('combined', {
+  stream: { write: (msg: string) => logger.http(msg.trim()) },
+  skip: (_req, res) => config.isProduction && res.statusCode < 400,
+}));
 
-// â”€â”€â”€ Start Server â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const startServer = async (): Promise<void> => {
-  await connectDB();
-  app.listen(PORT, () => {
-    console.log(ðŸš€ payment-service running on port +"${PORT}");
+// ─── Routes ─────────────────────────────────────────────────
+
+app.get('/', (_req, res) => {
+  res.json({
+    service: 'payment-service',
+    status: 'running',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
   });
-};
-
-startServer().catch((err) => {
-  console.error('âŒ Failed to start payment-service:', err);
-  process.exit(1);
 });
 
+app.get('/health', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    const redisPing = await getRedisClient().ping();
+    res.json({
+      success: true,
+      service: 'payment-service',
+      db: 'connected',
+      redis: redisPing === 'PONG' ? 'connected' : 'disconnected',
+    });
+  } catch (error: any) {
+    logger.error('Health check failed:', error);
+    res.status(503).json({ success: false, error: 'Health check failed' });
+  }
+});
+
+app.use('/payments', paymentRoutes);
+
+app.use((_req, res) => {
+  res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Route not found' } });
+});
+
+app.use(errorHandler);
+
+// ─── Startup ────────────────────────────────────────────────
+
+async function start() {
+  try {
+    logger.info('Starting Payment Service...');
+    
+    // 1. Check DB Connection
+    await prisma.$connect();
+    logger.info('🟢 PostgreSQL connected (Prisma)');
+
+    // 2. Check Redis Connection
+    getRedisClient();
+
+    // 3. Start HTTP Server
+    httpServer.listen(config.port, () => {
+      logger.info(`💳 Payment Service running on port ${config.port}`);
+      logger.info(`   Environment: ${config.nodeEnv}`);
+    });
+
+    // 4. Graceful Shutdown
+    const shutdown = async (signal: string) => {
+      logger.info(`\n📡 Received ${signal}. Shutting down...`);
+      httpServer.close(async () => {
+        logger.info('HTTP server closed');
+        await prisma.$disconnect();
+        await disconnectRedis();
+        process.exit(0);
+      });
+      setTimeout(() => {
+        logger.error('⚠️  Forced shutdown');
+        process.exit(1);
+      }, 10000);
+    };
+
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+  } catch (error) {
+    logger.error('❌ Failed to start Payment Service:', error);
+    process.exit(1);
+  }
+}
+
+start();
 export default app;
