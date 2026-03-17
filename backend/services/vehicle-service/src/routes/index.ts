@@ -1,13 +1,5 @@
-﻿/**
- * @file vehicle-service routes
- * @description Route definitions for the Vehicle listing & management service.
+/**
+ * @file routes/index.ts
+ * @description Barrel exports for vehicle routes.
  */
-
-import { Router } from 'express';
-import { healthCheck } from '../controllers';
-
-const router = Router();
-
-router.get('/health', healthCheck);
-
-export default router;
+export { default as vehicleRoutes } from './vehicle.routes';

@@ -1,46 +1,86 @@
-﻿/**
+/**
  * @file index.ts
- * @description Entry point for the Vehicle listing & management service.
+ * @description Vehicle Service entry point.
  */
 
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
-import { connectDB } from '../../../shared/utils/db';
-
-dotenv.config();
+import { config } from './config';
+import { logger } from './utils/logger';
+import { getRedisClient, disconnectRedis } from './utils/redis.util';
+import { ensureIndex } from './utils/elasticsearch.util';
+import { disconnectPrisma } from './services/vehicle.service';
+import { notFoundHandler, globalErrorHandler } from './middleware/errorHandler';
+import vehicleRoutes from './routes/vehicle.routes';
 
 const app = express();
-const PORT = process.env.PORT || 3002;
 
-// â”€â”€â”€ Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Security ───────────────────────────────────────────────
 app.use(helmet());
-app.use(cors());
-app.use(morgan('combined'));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: config.corsOrigins, credentials: true, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] }));
+app.disable('x-powered-by');
 
-// â”€â”€â”€ Health Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', service: 'vehicle-service', timestamp: new Date().toISOString() });
+// ─── Body Parsing ───────────────────────────────────────────
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// ─── Logging ────────────────────────────────────────────────
+app.use(morgan('combined', {
+  stream: { write: (msg: string) => logger.http(msg.trim()) },
+  skip: (_req, res) => config.isProduction && res.statusCode < 400,
+}));
+
+app.set('trust proxy', 1);
+
+// ─── Routes ─────────────────────────────────────────────────
+app.use('/vehicles', vehicleRoutes);
+
+app.get('/', (_req, res) => {
+  res.json({ service: 'vehicle-service', version: '1.0.0', status: 'running', timestamp: new Date().toISOString() });
 });
 
-// â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// TODO: Import and mount route modules
+app.use(notFoundHandler);
+app.use(globalErrorHandler);
 
-// â”€â”€â”€ Start Server â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const startServer = async (): Promise<void> => {
-  await connectDB();
-  app.listen(PORT, () => {
-    console.log(ðŸš€ vehicle-service running on port +"${PORT}");
-  });
-};
+// ─── Startup ────────────────────────────────────────────────
+async function start(): Promise<void> {
+  try {
+    // Redis
+    const redis = getRedisClient();
+    await redis.ping();
+    logger.info('✅ Redis connected');
 
-startServer().catch((err) => {
-  console.error('âŒ Failed to start vehicle-service:', err);
-  process.exit(1);
-});
+    // Elasticsearch — ensure index exists
+    await ensureIndex();
 
+    // HTTP Server
+    const server = app.listen(config.port, () => {
+      logger.info(`🚗 Vehicle Service running on port ${config.port}`);
+      logger.info(`   Environment: ${config.nodeEnv}`);
+      logger.info(`   Health: http://localhost:${config.port}/vehicles/health`);
+    });
+
+    // Graceful shutdown
+    const shutdown = async (signal: string): Promise<void> => {
+      logger.info(`\n📡 Received ${signal}. Shutting down...`);
+      server.close(async () => {
+        await disconnectRedis();
+        await disconnectPrisma();
+        logger.info('👋 Vehicle Service shutdown complete');
+        process.exit(0);
+      });
+      setTimeout(() => { logger.error('⚠️  Forced shutdown'); process.exit(1); }, 10000);
+    };
+
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+  } catch (error) {
+    logger.error('❌ Failed to start Vehicle Service:', error);
+    process.exit(1);
+  }
+}
+
+start();
 export default app;

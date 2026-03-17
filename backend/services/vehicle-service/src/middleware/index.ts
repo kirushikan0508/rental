@@ -1,6 +1,10 @@
-﻿/**
- * @file vehicle-service middleware
- * @description Service-specific middleware for the Vehicle listing & management service.
+/**
+ * @file middleware/index.ts
+ * @description Barrel exports for all vehicle-service middleware.
  */
 
-export {};
+export { authenticate } from './authenticate';
+export { authorize } from './authorize';
+export { validate, validateQuery } from './validate';
+export { notFoundHandler, globalErrorHandler } from './errorHandler';
+export { imageUpload, documentUpload } from './upload.middleware';

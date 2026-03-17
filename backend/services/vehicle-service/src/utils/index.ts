@@ -1,6 +1,8 @@
-﻿/**
- * @file vehicle-service utils
- * @description Utility helpers specific to the Vehicle listing & management service.
+/**
+ * @file utils/index.ts
+ * @description Barrel exports for vehicle-service utilities.
  */
-
-export {};
+export * from './logger';
+export * from './redis.util';
+export * from './s3.util';
+export * from './elasticsearch.util';
