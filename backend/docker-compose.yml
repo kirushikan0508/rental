@@ -1,0 +1,272 @@
+# =============================================================
+# Vehicle Rental Marketplace — Docker Compose (Development)
+# =============================================================
+# Brings up all microservices, API gateway, and supporting
+# infrastructure (MongoDB, Redis, RabbitMQ) for local dev.
+# =============================================================
+
+version: "3.9"
+
+services:
+  # ─── Infrastructure ────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: rental-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - rental-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: rental-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass redis123
+    volumes:
+      - redis_data:/data
+    networks:
+      - rental-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rental-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - rental-network
+
+  # ─── API Gateway ───────────────────────────────────────────
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: rental-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - REDIS_URL=redis://:redis123@redis:6379
+    depends_on:
+      - redis
+    networks:
+      - rental-network
+
+  # ─── Microservices ─────────────────────────────────────────
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: rental-auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/rental_auth?authSource=admin
+      - REDIS_URL=redis://:redis123@redis:6379
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - rental-network
+
+  vehicle-service:
+    build:
+      context: ./services/vehicle-service
+      dockerfile: Dockerfile
+    container_name: rental-vehicle-service
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/rental_vehicles?authSource=admin
+      - REDIS_URL=redis://:redis123@redis:6379
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - rental-network
+
+  booking-service:
+    build:
+      context: ./services/booking-service
+      dockerfile: Dockerfile
+    container_name: rental-booking-service
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/rental_bookings?authSource=admin
+      - REDIS_URL=redis://:redis123@redis:6379
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - rental-network
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: rental-payment-service
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/rental_payments?authSource=admin
+      - REDIS_URL=redis://:redis123@redis:6379
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - rental-network
+
+  tracking-service:
+    build:
+      context: ./services/tracking-service
+      dockerfile: Dockerfile
+    container_name: rental-tracking-service
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=development
+      - PORT=3005
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/rental_tracking?authSource=admin
+      - REDIS_URL=redis://:redis123@redis:6379
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - rental-network
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: rental-notification-service
+    ports:
+      - "3006:3006"
+    environment:
+      - NODE_ENV=development
+      - PORT=3006
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/rental_notifications?authSource=admin
+      - REDIS_URL=redis://:redis123@redis:6379
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - rental-network
+
+  chat-service:
+    build:
+      context: ./services/chat-service
+      dockerfile: Dockerfile
+    container_name: rental-chat-service
+    ports:
+      - "3007:3007"
+    environment:
+      - NODE_ENV=development
+      - PORT=3007
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/rental_chat?authSource=admin
+      - REDIS_URL=redis://:redis123@redis:6379
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - rental-network
+
+  ai-service:
+    build:
+      context: ./services/ai-service
+      dockerfile: Dockerfile
+    container_name: rental-ai-service
+    ports:
+      - "3008:3008"
+    environment:
+      - NODE_ENV=development
+      - PORT=3008
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/rental_ai?authSource=admin
+      - REDIS_URL=redis://:redis123@redis:6379
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - rental-network
+
+  admin-service:
+    build:
+      context: ./services/admin-service
+      dockerfile: Dockerfile
+    container_name: rental-admin-service
+    ports:
+      - "3009:3009"
+    environment:
+      - NODE_ENV=development
+      - PORT=3009
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/rental_admin?authSource=admin
+      - REDIS_URL=redis://:redis123@redis:6379
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - rental-network
+
+  # ─── ML Service (Python) ──────────────────────────────────
+  ml-service:
+    build:
+      context: ../ml
+      dockerfile: Dockerfile
+    container_name: rental-ml-service
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGO_URI=mongodb://admin:admin123@mongodb:27017/rental_ml?authSource=admin
+      - REDIS_URL=redis://:redis123@redis:6379
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - rental-network
+
+volumes:
+  mongo_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  rental-network:
+    driver: bridge

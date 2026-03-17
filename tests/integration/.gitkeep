@@ -1,0 +1,4 @@
+/**
+ * @file tests/integration/.gitkeep
+ * @description Integration test directory — tests with real DB and service interactions.
+ */

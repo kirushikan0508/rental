@@ -1,0 +1,164 @@
+openapi: '3.0.3'
+info:
+  title: Vehicle Rental Marketplace API
+  description: |
+    RESTful API for the vehicle rental marketplace platform.
+    All endpoints are accessed through the API Gateway at `/api/v1`.
+  version: '1.0.0'
+  contact:
+    name: API Support
+    email: support@rentalplatform.com
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development
+  - url: https://api.rentalplatform.com/api/v1
+    description: Production
+
+tags:
+  - name: Auth
+    description: Authentication & authorization
+  - name: Vehicles
+    description: Vehicle listing & search
+  - name: Bookings
+    description: Booking lifecycle
+  - name: Payments
+    description: Payment processing
+  - name: Tracking
+    description: Real-time vehicle tracking
+  - name: Chat
+    description: In-app messaging
+  - name: Notifications
+    description: Push, email, SMS notifications
+  - name: Admin
+    description: Admin dashboard operations
+  - name: KYC
+    description: Identity verification
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [firstName, lastName, email, phone, password]
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '201':
+          description: User created successfully
+        '409':
+          description: Email or phone already exists
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful — returns token pair
+        '401':
+          description: Invalid credentials
+
+  /vehicles:
+    get:
+      tags: [Vehicles]
+      summary: Search vehicles
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [CAR, BIKE, SCOOTER, VAN, SUV, TRUCK]
+        - name: lat
+          in: query
+          schema:
+            type: number
+        - name: lng
+          in: query
+          schema:
+            type: number
+        - name: radius
+          in: query
+          schema:
+            type: number
+            description: Search radius in km
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated vehicle results
+
+  /bookings:
+    post:
+      tags: [Bookings]
+      summary: Create a new booking
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vehicleId, startDateTime, endDateTime, pricingType]
+              properties:
+                vehicleId:
+                  type: string
+                startDateTime:
+                  type: string
+                  format: date-time
+                endDateTime:
+                  type: string
+                  format: date-time
+                pricingType:
+                  type: string
+                  enum: [HOURLY, DAILY, WEEKLY, MONTHLY]
+      responses:
+        '201':
+          description: Booking created
+        '409':
+          description: Vehicle not available for selected dates
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

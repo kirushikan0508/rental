@@ -1,0 +1,14 @@
+# Vehicle Rental Marketplace — ML Service Dependencies
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+motor==3.3.2           # async MongoDB driver
+redis==5.0.1
+numpy==1.26.3
+pandas==2.2.0
+scikit-learn==1.4.0
+xgboost==2.0.3
+Pillow==10.2.0         # image quality analysis
+python-dotenv==1.0.0
+httpx==0.26.0          # async HTTP client
+python-multipart==0.0.6

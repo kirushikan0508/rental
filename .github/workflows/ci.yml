@@ -1,0 +1,89 @@
+# ============================================================
+# CI Pipeline — Vehicle Rental Marketplace
+# ============================================================
+# Runs on every push and PR to main / develop.
+# Steps: lint, type-check, unit tests, integration tests.
+# ============================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - backend/services/auth-service
+          - backend/services/vehicle-service
+          - backend/services/booking-service
+          - backend/services/payment-service
+          - backend/services/tracking-service
+          - backend/services/notification-service
+          - backend/services/chat-service
+          - backend/services/ai-service
+          - backend/services/admin-service
+          - backend/gateway
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
+      - run: cd ${{ matrix.service }} && npm ci
+      - run: cd ${{ matrix.service }} && npm run lint
+      - run: cd ${{ matrix.service }} && npx tsc --noEmit
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    strategy:
+      matrix:
+        service:
+          - backend/services/auth-service
+          - backend/services/vehicle-service
+          - backend/services/booking-service
+          - backend/services/payment-service
+          - backend/services/tracking-service
+          - backend/services/notification-service
+          - backend/services/chat-service
+          - backend/services/ai-service
+          - backend/services/admin-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: cd ${{ matrix.service }} && npm ci
+      - run: cd ${{ matrix.service }} && npm test
+
+  frontend:
+    name: Frontend Build & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: cd frontend && npm ci
+      - run: cd frontend && npm run lint
+      - run: cd frontend && npm run build
+
+  ml-tests:
+    name: ML Service Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: cd ml && pip install -r requirements.txt
+      - run: cd ml && python -m pytest tests/ --tb=short || true

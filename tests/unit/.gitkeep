@@ -1,0 +1,4 @@
+/**
+ * @file tests/unit/.gitkeep
+ * @description Unit test directory — service-level tests with mocked dependencies.
+ */
