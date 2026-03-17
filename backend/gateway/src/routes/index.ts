@@ -1,18 +1,7 @@
 /**
- * @file gateway/src/routes/index.ts
- * @description Gateway route definitions — proxy mappings to downstream services.
+ * @file routes/index.ts
+ * @description Barrel exports for all gateway route modules.
  */
 
-import { Router } from 'express';
-
-const router = Router();
-
-// TODO: Configure http-proxy-middleware for each service
-// import { createProxyMiddleware } from 'http-proxy-middleware';
-// import { SERVICE_URLS } from '../config';
-
-router.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'api-gateway' });
-});
-
-export default router;
+export { default as proxyRoutes } from './proxy.routes';
+export { default as healthRoutes } from './health.routes';
