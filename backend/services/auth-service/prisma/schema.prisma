@@ -1,0 +1,82 @@
+// ============================================================
+// Prisma Schema — Auth Service
+// ============================================================
+// Primary data store for user accounts, authentication,
+// and identity management in the vehicle rental platform.
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────
+
+/// Platform user roles controlling access permissions
+enum UserRole {
+  RENTER
+  OWNER
+  ADMIN
+  SUPPORT
+  FINANCE
+}
+
+/// Authentication provider used for registration
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  OTP
+}
+
+// ─── Users Table ────────────────────────────────────────────
+
+/// Core user identity table — stores account details,
+/// authentication metadata, preferences, and status flags.
+model User {
+  id              String       @id @default(uuid())
+  firstName       String       @map("first_name") @db.VarChar(50)
+  lastName        String       @map("last_name") @db.VarChar(50)
+  email           String       @unique @db.VarChar(255)
+  phone           String       @unique @db.VarChar(20)
+  passwordHash    String?      @map("password_hash") @db.VarChar(255)
+  role            UserRole     @default(RENTER)
+  authProvider    AuthProvider @default(EMAIL) @map("auth_provider")
+  googleId        String?      @unique @map("google_id") @db.VarChar(255)
+  avatar          String?      @db.VarChar(500)
+
+  // ─── Verification Status ────────────────────────────────
+  isEmailVerified Boolean      @default(false) @map("is_email_verified")
+  isPhoneVerified Boolean      @default(false) @map("is_phone_verified")
+
+  // ─── Account Status ─────────────────────────────────────
+  isActive        Boolean      @default(true) @map("is_active")
+  isSuspended     Boolean      @default(false) @map("is_suspended")
+  suspendedReason String?      @map("suspended_reason") @db.VarChar(500)
+
+  // ─── Emergency Contact ──────────────────────────────────
+  emergencyContactName  String? @map("emergency_contact_name") @db.VarChar(100)
+  emergencyContactPhone String? @map("emergency_contact_phone") @db.VarChar(20)
+
+  // ─── Push Notifications ─────────────────────────────────
+  fcmToken        String?      @map("fcm_token") @db.VarChar(500)
+
+  // ─── Preferences ────────────────────────────────────────
+  preferredLanguage String     @default("en") @map("preferred_language") @db.VarChar(5)
+  darkMode          Boolean    @default(false) @map("dark_mode")
+
+  // ─── Timestamps ─────────────────────────────────────────
+  lastLoginAt     DateTime?    @map("last_login_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  // ─── Indexes ────────────────────────────────────────────
+  @@index([role])
+  @@index([isActive, isSuspended])
+  @@index([authProvider])
+  @@index([createdAt])
+  @@map("users")
+}
