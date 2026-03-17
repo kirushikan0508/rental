@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file index.ts
  * @description Entry point for the Real-time vehicle tracking service.
  */
@@ -9,10 +9,13 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { connectDB } from '../../../shared/utils/db';
+import { createServer } from 'http';
+import { initializeSocket } from './sockets';
 
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 3005;
 
 // â”€â”€â”€ Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -28,13 +31,16 @@ app.get('/health', (_req, res) => {
 });
 
 // â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// TODO: Import and mount route modules
+import trackingRoutes from './routes/tracking.routes';
+app.use('/api/v1/tracking', trackingRoutes);
 
 // â”€â”€â”€ Start Server â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const startServer = async (): Promise<void> => {
   await connectDB();
-  app.listen(PORT, () => {
-    console.log(ðŸš€ tracking-service running on port +"${PORT}");
+  await initializeSocket(httpServer);
+  
+  httpServer.listen(PORT, () => {
+    console.log(`ðŸš€ tracking-service running on port ${PORT}`);
   });
 };
 
