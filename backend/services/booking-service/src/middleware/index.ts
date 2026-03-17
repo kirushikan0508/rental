@@ -1,6 +1,9 @@
-﻿/**
- * @file booking-service middleware
- * @description Service-specific middleware for the Booking lifecycle management service.
+/**
+ * @file middleware/index.ts
+ * @description Barrel exports.
  */
 
-export {};
+export * from './authenticate';
+export * from './authorize';
+export * from './validate';
+export * from './errorHandler';
