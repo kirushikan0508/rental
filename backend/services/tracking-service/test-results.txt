@@ -1,0 +1,115 @@
+ts-jest[config] (WARN) [94mmessage[0m[90m TS151001: [0mIf you have issues related to imports, you should consider setting `esModuleInterop` to `true` in your TypeScript configuration file (usually `tsconfig.json`). See https://blogs.msdn.microsoft.com/typescript/2018/01/31/announcing-typescript-2-7/#easier-ecmascript-module-interoperability for more information.
+ts-jest[config] (WARN) [94mmessage[0m[90m TS151001: [0mIf you have issues related to imports, you should consider setting `esModuleInterop` to `true` in your TypeScript configuration file (usually `tsconfig.json`). See https://blogs.msdn.microsoft.com/typescript/2018/01/31/announcing-typescript-2-7/#easier-ecmascript-module-interoperability for more information.
+FAIL src/services/__tests__/geofence.service.test.ts
+  ● Test suite failed to run
+
+    [96msrc/services/__tests__/geofence.service.test.ts[0m:[93m4[0m:[93m1[0m - [91merror[0m[90m TS2304: [0mCannot find name 'jest'.
+
+    [7m4[0m jest.mock('../../models/GeofenceEvent', () => ({
+    [7m [0m [91m~~~~[0m
+    [96msrc/services/__tests__/geofence.service.test.ts[0m:[93m6[0m:[93m13[0m - [91merror[0m[90m TS2304: [0mCannot find name 'jest'.
+
+    [7m6[0m     create: jest.fn().mockResolvedValue(true)
+    [7m [0m [91m            ~~~~[0m
+    [96msrc/services/__tests__/geofence.service.test.ts[0m:[93m10[0m:[93m1[0m - [91merror[0m[90m TS2582: [0mCannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+
+    [7m10[0m describe('GeofenceService', () => {
+    [7m  [0m [91m~~~~~~~~[0m
+    [96msrc/services/__tests__/geofence.service.test.ts[0m:[93m27[0m:[93m3[0m - [91merror[0m[90m TS2304: [0mCannot find name 'afterEach'.
+
+    [7m27[0m   afterEach(() => {
+    [7m  [0m [91m  ~~~~~~~~~[0m
+    [96msrc/services/__tests__/geofence.service.test.ts[0m:[93m28[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'jest'.
+
+    [7m28[0m     jest.clearAllMocks();
+    [7m  [0m [91m    ~~~~[0m
+    [96msrc/services/__tests__/geofence.service.test.ts[0m:[93m31[0m:[93m3[0m - [91merror[0m[90m TS2582: [0mCannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+
+    [7m31[0m   it('should return true if location is inside the active zone', async () => {
+    [7m  [0m [91m  ~~[0m
+    [96msrc/services/__tests__/geofence.service.test.ts[0m:[93m40[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'expect'.
+
+    [7m40[0m     expect(isInside).toBe(true);
+    [7m  [0m [91m    ~~~~~~[0m
+    [96msrc/services/__tests__/geofence.service.test.ts[0m:[93m43[0m:[93m3[0m - [91merror[0m[90m TS2582: [0mCannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+
+    [7m43[0m   it('should return false and log breach if location is outside the active zone', async () => {
+    [7m  [0m [91m  ~~[0m
+    [96msrc/services/__tests__/geofence.service.test.ts[0m:[93m52[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'expect'.
+
+    [7m52[0m     expect(isInside).toBe(false);
+    [7m  [0m [91m    ~~~~~~[0m
+    [96msrc/services/__tests__/geofence.service.test.ts[0m:[93m56[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'expect'.
+
+    [7m56[0m     expect(GeofenceEvent.create).toHaveBeenCalled();
+    [7m  [0m [91m    ~~~~~~[0m
+    [96msrc/services/__tests__/geofence.service.test.ts[0m:[93m59[0m:[93m3[0m - [91merror[0m[90m TS2582: [0mCannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+
+    [7m59[0m   it('should always return true if there are no active zones provided', async () => {
+    [7m  [0m [91m  ~~[0m
+    [96msrc/services/__tests__/geofence.service.test.ts[0m:[93m66[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'expect'.
+
+    [7m66[0m     expect(isInside).toBe(true);
+    [7m  [0m [91m    ~~~~~~[0m
+
+FAIL src/services/__tests__/tracking-rule.service.test.ts
+  ● Test suite failed to run
+
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m3[0m:[93m1[0m - [91merror[0m[90m TS2582: [0mCannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+
+    [7m3[0m describe('TrackingRuleService', () => {
+    [7m [0m [91m~~~~~~~~[0m
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m16[0m:[93m3[0m - [91merror[0m[90m TS2582: [0mCannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+
+    [7m16[0m   it('Admin should be able to track continuously', () => {
+    [7m  [0m [91m  ~~[0m
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m20[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'expect'.
+
+    [7m20[0m     expect(TrackingRuleService.canTrack(context)).toBe(true);
+    [7m  [0m [91m    ~~~~~~[0m
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m23[0m:[93m3[0m - [91merror[0m[90m TS2582: [0mCannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+
+    [7m23[0m   it('Owner should be able to track during active booking with consent', () => {
+    [7m  [0m [91m  ~~[0m
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m25[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'expect'.
+
+    [7m25[0m     expect(TrackingRuleService.canTrack(context)).toBe(true);
+    [7m  [0m [91m    ~~~~~~[0m
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m28[0m:[93m3[0m - [91merror[0m[90m TS2582: [0mCannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+
+    [7m28[0m   it('Owner should NOT be able to track if Renter revoked consent', () => {
+    [7m  [0m [91m  ~~[0m
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m31[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'expect'.
+
+    [7m31[0m     expect(TrackingRuleService.canTrack(context)).toBe(false);
+    [7m  [0m [91m    ~~~~~~[0m
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m34[0m:[93m3[0m - [91merror[0m[90m TS2582: [0mCannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+
+    [7m34[0m   it('Owner should NOT be able to track before the trip starts', () => {
+    [7m  [0m [91m  ~~[0m
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m41[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'expect'.
+
+    [7m41[0m     expect(TrackingRuleService.canTrack(context)).toBe(false);
+    [7m  [0m [91m    ~~~~~~[0m
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m44[0m:[93m3[0m - [91merror[0m[90m TS2582: [0mCannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+
+    [7m44[0m   it('Renter SHOULD be able to track 1 hour before pickup', () => {
+    [7m  [0m [91m  ~~[0m
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m50[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'expect'.
+
+    [7m50[0m     expect(TrackingRuleService.canTrack(context)).toBe(true);
+    [7m  [0m [91m    ~~~~~~[0m
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m53[0m:[93m3[0m - [91merror[0m[90m TS2582: [0mCannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+
+    [7m53[0m   it('Renter should NOT be able to track completed trips', () => {
+    [7m  [0m [91m  ~~[0m
+    [96msrc/services/__tests__/tracking-rule.service.test.ts[0m:[93m57[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'expect'.
+
+    [7m57[0m     expect(TrackingRuleService.canTrack(context)).toBe(false);
+    [7m  [0m [91m    ~~~~~~[0m
+
+Test Suites: 2 failed, 2 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        3.238 s
+Ran all test suites.
