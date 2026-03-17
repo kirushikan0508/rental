@@ -1,6 +1,11 @@
-﻿/**
- * @file booking-service utils
- * @description Utility helpers specific to the Booking lifecycle management service.
+/**
+ * @file utils/index.ts
+ * @description Barrel exports for utilities.
  */
 
-export {};
+export * from './logger';
+export * from './redis.util';
+export * from './db';
+export * from './pricing.engine';
+export * from './state-machine';
+export * from './lock.util';
