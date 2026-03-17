@@ -1,0 +1,173 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYHERE
+}
+
+enum PayoutStatus {
+  PENDING
+  IN_TRANSIT
+  PAID
+  FAILED
+  CANCELED
+}
+
+enum SubscriptionTier {
+  BASIC
+  PRO
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+}
+
+// ─── Models ─────────────────────────────────────────────────
+
+/// Records individual payments for bookings
+model Payment {
+  id                String          @id @default(uuid())
+  bookingId         String          // Reference to booking-service
+  renterId          String
+  ownerId           String
+  
+  amount            Int             // In smallest currency unit (cents)
+  currency          String          @default("usd")
+  
+  provider          PaymentProvider @default(STRIPE)
+  providerPaymentId String?         @unique // Stripe PaymentIntent ID
+  clientSecret      String?
+  receiptUrl        String?
+  
+  status            PaymentStatus   @default(PENDING)
+  errorMessage      String?
+  
+  // Commission Breakdown
+  platformFee       Int             @default(0) // Amount kept by platform
+  ownerAmount       Int             @default(0) // Amount owed to owner
+  commissionPercent Float           @default(20.0)
+
+  // Idempotency
+  idempotencyKey    String?         @unique
+
+  refunds           Refund[]
+  payout            Payout?         @relation(fields: [payoutId], references: [id])
+  payoutId          String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([bookingId])
+  @@index([renterId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+/// Records refunds (full or partial)
+model Refund {
+  id                String        @id @default(uuid())
+  paymentId         String
+  payment           Payment       @relation(fields: [paymentId], references: [id])
+  
+  amount            Int           // Refund amount in cents
+  currency          String        @default("usd")
+  reason            String?
+  
+  providerRefundId  String?       @unique // Stripe Refund ID
+  status            PaymentStatus @default(PENDING)
+  
+  createdBy         String        // User ID or 'SYSTEM' (auto cancellation)
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([paymentId])
+}
+
+/// Records payouts to owners via Stripe Connect
+model Payout {
+  id                String        @id @default(uuid())
+  ownerId           String
+  stripeAccountId   String        // Stripe Connect Account ID
+  
+  amount            Int           // Payout amount in cents
+  currency          String        @default("usd")
+  
+  providerPayoutId  String?       @unique // Stripe Payout ID
+  status            PayoutStatus  @default(PENDING)
+  errorMessage      String?
+
+  // A payout can aggregate multiple payments
+  payments          Payment[]
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+/// Owner Accounts for Stripe Connect and Subscriptions
+model OwnerAccount {
+  id                String        @id @default(uuid())
+  ownerId           String        @unique // User ID
+  
+  stripeAccountId   String?       @unique // Stripe Connect Express Account ID
+  payoutsEnabled    Boolean       @default(false)
+  chargesEnabled    Boolean       @default(false)
+
+  // Subscription Details
+  subscriptionTier  SubscriptionTier    @default(BASIC)
+  stripeCustomerId  String?             @unique
+  stripeSubscriptionId String?          @unique
+  subscriptionStatus   SubscriptionStatus?
+  currentPeriodEnd     DateTime?
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+/// PDF Invoices generated for bookings
+model Invoice {
+  id                String        @id @default(uuid())
+  invoiceNumber     String        @unique
+  bookingId         String        @unique
+  userId            String        // Renter ID
+  isCorporate       Boolean       @default(false)
+  
+  amount            Int
+  currency          String        @default("usd")
+  pdfUrl            String?       // Link to S3 stored PDF
+  emailedAt         DateTime?
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([userId])
+}

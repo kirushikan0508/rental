@@ -1,38 +1,48 @@
-﻿{
+{
   "name": "@rental/payment-service",
   "version": "1.0.0",
-  "description": "Payment processing & payouts service",
+  "description": "Payment processing, Stripe/PayHere, payouts, refunds, and invoicing",
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
+    "build": "npx prisma generate && tsc",
     "start": "node dist/index.js",
-    "lint": "eslint src/ --ext .ts",
-    "test": "jest --passWithNoTests"
+    "test": "jest --forceExit --detectOpenHandles",
+    "test:coverage": "jest --coverage",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@prisma/client": "^5.8.1",
     "express": "^4.18.2",
-    "mongoose": "^8.2.0",
+    "stripe": "^14.14.0",
     "ioredis": "^5.3.2",
-    "amqplib": "^0.10.3",
+    "bullmq": "^5.1.6",
+    "jsonwebtoken": "^9.0.2",
     "cors": "^2.8.5",
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",
     "dotenv": "^16.4.1",
     "winston": "^3.11.0",
-    "joi": "^17.12.1",
-    "jsonwebtoken": "^9.0.2"
+    "zod": "^3.22.4",
+    "pdfkit": "^0.14.0",
+    "nodemailer": "^6.9.8",
+    "md5": "^2.3.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/node": "^20.11.5",
     "@types/cors": "^2.8.17",
     "@types/morgan": "^1.9.9",
-    "@types/amqplib": "^0.10.4",
     "@types/jsonwebtoken": "^9.0.5",
+    "@types/pdfkit": "^0.13.3",
+    "@types/nodemailer": "^6.4.14",
+    "@types/md5": "^2.3.5",
+    "@types/jest": "^29.5.11",
+    "prisma": "^5.8.1",
     "typescript": "^5.3.3",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "eslint": "^8.56.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.1"
   }

@@ -1,6 +1,9 @@
-﻿/**
- * @file payment-service middleware
- * @description Service-specific middleware for the Payment processing & payouts service.
+/**
+ * @file middleware/index.ts
+ * @description Middleware barrel exports.
  */
 
-export {};
+export * from './authenticate';
+export * from './authorize';
+export * from './validate';
+export * from './errorHandler';
