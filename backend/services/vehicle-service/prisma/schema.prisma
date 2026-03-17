@@ -1,0 +1,191 @@
+// ============================================================
+// Prisma Schema — Vehicle Service
+// ============================================================
+// Vehicles, availability calendar, and document storage.
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────
+
+enum VehicleType {
+  CAR
+  BIKE
+  SCOOTER
+  VAN
+  SUV
+  TRUCK
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  ELECTRIC
+  HYBRID
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+}
+
+enum VehicleStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum DocumentType {
+  RC_BOOK
+  INSURANCE
+  POLLUTION_CERTIFICATE
+}
+
+// ─── Vehicles ───────────────────────────────────────────────
+
+/// Core vehicle listing with pricing, location, and metadata.
+model Vehicle {
+  id              String         @id @default(uuid())
+  ownerId         String         @map("owner_id")
+
+  // ─── Basic Info ─────────────────────────────────────────
+  title           String         @db.VarChar(200)
+  slug            String         @unique @db.VarChar(250)
+  description     String?        @db.Text
+  type            VehicleType
+  brand           String         @db.VarChar(50)
+  model           String         @db.VarChar(50)
+  year            Int
+  color           String         @db.VarChar(30)
+  licensePlate    String         @unique @map("license_plate") @db.VarChar(20)
+  fuelType        FuelType       @map("fuel_type")
+  transmission    Transmission
+  seats           Int            @default(4)
+  engineCapacity  String?        @map("engine_capacity") @db.VarChar(20)
+  mileage         Float?
+
+  // ─── Pricing ────────────────────────────────────────────
+  hourlyRate      Float          @map("hourly_rate")
+  dailyRate       Float          @map("daily_rate")
+  weeklyRate      Float?         @map("weekly_rate")
+  monthlyRate     Float?         @map("monthly_rate")
+  currency        String         @default("LKR") @db.VarChar(3)
+  securityDeposit Float          @default(0) @map("security_deposit")
+
+  // ─── Location (GeoJSON-like) ────────────────────────────
+  latitude        Float
+  longitude       Float
+  address         String         @db.VarChar(500)
+  city            String         @db.VarChar(100)
+  state           String?        @db.VarChar(100)
+
+  // ─── Features & Extras ──────────────────────────────────
+  features        String[]       @default([])
+  isEv            Boolean        @default(false) @map("is_ev")
+  greenScore      Int            @default(0) @map("green_score")
+
+  // ─── Status & Ratings ───────────────────────────────────
+  status          VehicleStatus  @default(PENDING)
+  isAvailable     Boolean        @default(true) @map("is_available")
+  averageRating   Float          @default(0) @map("average_rating")
+  totalReviews    Int            @default(0) @map("total_reviews")
+  totalBookings   Int            @default(0) @map("total_bookings")
+
+  // ─── Admin ──────────────────────────────────────────────
+  adminNote       String?        @map("admin_note") @db.Text
+  flaggedForReview Boolean       @default(false) @map("flagged_for_review")
+
+  // ─── Soft Delete ────────────────────────────────────────
+  isDeleted       Boolean        @default(false) @map("is_deleted")
+  deletedAt       DateTime?      @map("deleted_at")
+
+  // ─── Timestamps ─────────────────────────────────────────
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  // ─── Relations ──────────────────────────────────────────
+  images          VehicleImage[]
+  documents       VehicleDocument[]
+  availability    Availability[]
+
+  @@index([ownerId])
+  @@index([type, fuelType])
+  @@index([status, isAvailable])
+  @@index([city])
+  @@index([latitude, longitude])
+  @@index([dailyRate])
+  @@index([averageRating])
+  @@index([isDeleted])
+  @@map("vehicles")
+}
+
+// ─── Vehicle Images ─────────────────────────────────────────
+
+/// S3-stored vehicle images with ordering support.
+model VehicleImage {
+  id          String   @id @default(uuid())
+  vehicleId   String   @map("vehicle_id")
+  url         String   @db.VarChar(500)
+  key         String   @db.VarChar(500)
+  isPrimary   Boolean  @default(false) @map("is_primary")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@map("vehicle_images")
+}
+
+// ─── Vehicle Documents ──────────────────────────────────────
+
+/// Regulatory documents (RC book, insurance, pollution cert).
+model VehicleDocument {
+  id          String       @id @default(uuid())
+  vehicleId   String       @map("vehicle_id")
+  type        DocumentType
+  url         String       @db.VarChar(500)
+  key         String       @db.VarChar(500)
+  expiryDate  DateTime?    @map("expiry_date")
+  verified    Boolean      @default(false)
+  verifiedAt  DateTime?    @map("verified_at")
+  verifiedBy  String?      @map("verified_by")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  vehicle     Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@index([type])
+  @@map("vehicle_documents")
+}
+
+// ─── Availability Calendar ──────────────────────────────────
+
+/// Per-date availability records for a vehicle.
+/// isBlocked = true means the vehicle is unavailable on that date.
+model Availability {
+  id          String   @id @default(uuid())
+  vehicleId   String   @map("vehicle_id")
+  date        DateTime @db.Date
+  isBlocked   Boolean  @default(false) @map("is_blocked")
+  reason      String?  @db.VarChar(200)
+  customPrice Float?   @map("custom_price")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@unique([vehicleId, date])
+  @@index([vehicleId, date])
+  @@index([isBlocked])
+  @@map("availability")
+}
