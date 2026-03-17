@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@rental/notification-service",
   "version": "1.0.0",
   "description": "Push, email, SMS notification service",
@@ -11,29 +11,35 @@
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^8.2.0",
-    "ioredis": "^5.3.2",
     "amqplib": "^0.10.3",
+    "bullmq": "^5.71.0",
     "cors": "^2.8.5",
-    "helmet": "^7.1.0",
-    "morgan": "^1.10.0",
     "dotenv": "^16.4.1",
-    "winston": "^3.11.0",
+    "express": "^4.18.2",
+    "firebase-admin": "^13.7.0",
+    "helmet": "^7.1.0",
+    "ioredis": "^5.3.2",
     "joi": "^17.12.1",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.2.0",
+    "morgan": "^1.10.0",
+    "nodemailer": "^8.0.2",
+    "twilio": "^5.13.0",
+    "winston": "^3.11.0"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.11.5",
-    "@types/cors": "^2.8.17",
-    "@types/morgan": "^1.9.9",
     "@types/amqplib": "^0.10.4",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.5",
-    "typescript": "^5.3.3",
-    "ts-node-dev": "^2.0.0",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^20.11.5",
+    "@types/nodemailer": "^7.0.11",
     "eslint": "^8.56.0",
     "jest": "^29.7.0",
-    "ts-jest": "^29.1.1"
+    "ts-jest": "^29.1.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
   }
 }

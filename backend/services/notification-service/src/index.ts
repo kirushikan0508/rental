@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file index.ts
  * @description Entry point for the Push, email, SMS notification service.
  */
@@ -7,8 +7,9 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 import { connectDB } from '../../../shared/utils/db';
+import { createServer } from 'http';
 
 dotenv.config();
 
@@ -28,13 +29,20 @@ app.get('/health', (_req, res) => {
 });
 
 // â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// TODO: Import and mount route modules
+import notificationRoutes from './routes/notification.routes';
+import { startNotificationWorker } from './queues/notification.queue';
+
+app.use('/api/v1/notifications', notificationRoutes);
 
 // â”€â”€â”€ Start Server â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const startServer = async (): Promise<void> => {
   await connectDB();
+  
+  // Start the background worker for processing the queue
+  startNotificationWorker();
+
   app.listen(PORT, () => {
-    console.log(ðŸš€ notification-service running on port +"${PORT}");
+    console.log(`ðŸš€ notification-service running on port ${PORT}`);
   });
 };
 

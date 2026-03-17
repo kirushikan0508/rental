@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file index.ts
  * @description Entry point for the Real-time messaging service.
  */
@@ -7,12 +7,15 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 import { connectDB } from '../../../shared/utils/db';
+import { createServer } from 'http';
+import { initializeSocket } from './sockets';
 
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 3007;
 
 // â”€â”€â”€ Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -28,13 +31,16 @@ app.get('/health', (_req, res) => {
 });
 
 // â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// TODO: Import and mount route modules
+import chatRoutes from './routes/chat.routes';
+app.use('/api/v1/chat', chatRoutes);
 
 // â”€â”€â”€ Start Server â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const startServer = async (): Promise<void> => {
   await connectDB();
-  app.listen(PORT, () => {
-    console.log(ðŸš€ chat-service running on port +"${PORT}");
+  await initializeSocket(httpServer);
+
+  httpServer.listen(PORT, () => {
+    console.log(`ðŸš€ chat-service running on port ${PORT}`);
   });
 };
 
