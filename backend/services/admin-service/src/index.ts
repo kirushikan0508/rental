@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file index.ts
  * @description Entry point for the Admin dashboard & operations service.
  */
@@ -28,13 +28,14 @@ app.get('/health', (_req, res) => {
 });
 
 // â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// TODO: Import and mount route modules
+import adminRoutes from './routes/admin.routes';
+app.use('/api/v1/admin', adminRoutes);
 
 // â”€â”€â”€ Start Server â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const startServer = async (): Promise<void> => {
   await connectDB();
   app.listen(PORT, () => {
-    console.log(ðŸš€ admin-service running on port +"${PORT}");
+    console.log(`ðŸš€ admin-service running on port ${PORT}`);
   });
 };
 
